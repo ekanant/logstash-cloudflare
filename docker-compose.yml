@@ -10,4 +10,9 @@ services:
       - "./config/logstash_pipeline/:/usr/share/logstash/pipeline/"
       - "./data/logstash/data/:/usr/share/logstash/data/"
       - "./data/logstash/logs/:/usr/share/logstash/logs/"
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "512m"
+        max-file: "5"
     
