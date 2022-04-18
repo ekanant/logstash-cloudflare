@@ -1,0 +1,13 @@
+version: '3.9'
+services:
+  logstash:
+    build: 
+      context: ./
+    ports: ['9600:9600']
+    volumes:
+      #- "./config/logstash/logstash.yml:/usr/share/logstash/config/logstash.yml"
+      - "./config/logstash/pipelines.yml:/usr/share/logstash/config/pipelines.yml"
+      - "./config/logstash_pipeline/:/usr/share/logstash/pipeline/"
+      - "./data/logstash/data/:/usr/share/logstash/data/"
+      - "./data/logstash/logs/:/usr/share/logstash/logs/"
+    
