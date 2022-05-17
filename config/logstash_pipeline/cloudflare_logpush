@@ -1,10 +1,68 @@
+###
+Simple print log
+###
+
+#input {
+#  google_cloud_storage {
+#    interval => 60
+#    bucket_id => "my_bucket"
+#    json_key_file => "/usr/share/logstash/pipeline/gcp_json_key.json"
+#    file_matches => ".*json"
+#    codec => "json_lines"
+#  }
+#}
+#output { stdout { codec => rubydebug } }
+
+###
+Fix some invalid json by process plain text
+###
+
 input {
   google_cloud_storage {
-    interval => 60
-    bucket_id => "my_bucket"
+    interval => 10
+    bucket_id => "cloudflare-jobtopgun-196804"
     json_key_file => "/usr/share/logstash/pipeline/gcp_json_key.json"
-    file_matches => ".*json"
-    codec => "json_lines"
+    file_matches => ".*log.gz"
+    codec => "plain"
   }
 }
-output { stdout { codec => rubydebug } }
+
+filter {
+	json {
+		skip_on_invalid_json => true
+		source => "message"
+	}
+	geoip {
+		source => "ClientIP"
+		target => "geoip"
+	}
+	mutate {
+		rename => ["geoip", "ClientIP" ]
+  }
+
+  date {
+      match => [ "EdgeStartTimestamp", "yyyy-MM-dd'T'HH:mm:ssZ", "yyyy-MM-dd'T'HH:mm:ss.SSSZ" ]
+      timezone => "UTC"
+      target => "@timestamp"
+  }
+  date {
+      match => [ "EdgeStartTimestamp", "yyyy-MM-dd'T'HH:mm:ssZ", "yyyy-MM-dd'T'HH:mm:ss.SSSZ" ]
+      timezone => "UTC"
+      target => "EdgeStartTimestamp"
+  }
+  useragent {
+      source => "ClientRequestUserAgent"
+      target => "UserAgent"
+  }
+}
+
+output {
+  elasticsearch {
+    hosts => ["http://127.0.0.1:9200"]
+    user => ""
+    password => ""
+    index => "cloudflare-%{+YYYY.MM.dd}"
+    template_name => "cloudflare"
+    document_id => "%{[RayID]}"
+  }
+}
